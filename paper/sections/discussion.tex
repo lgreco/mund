@@ -1,0 +1,26 @@
+\section{Discussion}
+
+\paragraph{What the results do and do not say.} The model says that, \emph{if} the structure of
+Table~\ref{tab:struct} holds and the parameters are roughly right, then relieving the space limit helps most,
+walking helps a little, and an offset trades queue length for lateness. It does not say how large any of these effects
+is at Mundelein Center, and it cannot say whether the structure holds. Parameter sweeps tell us which numbers
+matter within the model. Only observation can tell us whether the model is the right one.
+
+\paragraph{Backpacks matter most.} The cars leave full because of volume, not weight. Making room for two more
+riders per car is by far the largest single lever in the model, and it costs nothing but a message. That ranking
+depends on modelling choices: the benefit is a fixed two seats on every complying car, and students have no other
+way to adapt. Partial compliance gives partial benefit in the
+model, but this is partly by construction, since compliance is a per-car coin flip. In practice compliance may be
+clustered, for instance a few riders per car who do not comply may be enough to erase the extra room, and the model
+cannot show that.
+
+\paragraph{Walking is a supporting measure.} Floors 2 and 3 are only 17\% of the classrooms, and the
+atrium makes the climb to floor~2 feel like two flights. The gain comes mostly from the way down: walkers
+remove the empty stops on floors 3 and 2 that full cars make on their way to the lobby.
+
+\paragraph{The upper floors need structural help.} Floor~10 is the worst floor even after both measures,
+because all of its traffic goes through the two-car bank. Behavioral measures soften the problem; moving some of
+the load off the upper floors in the room assignment, or offsetting their clock, would act on the cause.
+The offset is a trade-off, not a free gain. This conclusion depends on the controller assumptions: the model has
+the two-car bank serve lower floors on the same terms as the four-car bank, with no priority for the upper floors,
+and a real controller may allocate its cars differently.

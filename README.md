@@ -6,7 +6,7 @@ A simulation study of elevator demand from classrooms in Mundelein Center (Loyol
 
 The building has 54 classrooms on 12 floors and two elevator banks: four cars that reach floor 9 and two cars that reach floor 14. The study compares two behavioral measures (holding backpacks in front, and walking on floors 2 and 3) and a time offset for floors 10-14.
 
-**The results are simulated, not measured.** Every timing parameter is an assumption, so treat the numbers as relative comparisons. The paper's limitations section describes the timing study needed to calibrate the model.
+**The results are simulated, not measured.** Every timing parameter is an estimate, and the simulator also embeds structural assumptions (for example, students never abandon a queue, and backpack compliance is a per-car coin flip) that no parameter sweep varies. Treat the numbers as relative comparisons from one model, not as predictions for the building. The paper lists the structural assumptions in a table and ranks the work needed to validate the model (see Future work below).
 
 ## Layout
 
@@ -19,6 +19,7 @@ The building has 54 classrooms on 12 floors and two elevator banks: four cars th
 | `model/run_experiments.py` | Experiment runner; writes tables and figures |
 | `results/*.csv` | Result tables (60 replicates per scenario) |
 | `paper/paper.tex`, `paper/paper.pdf` | Technical paper and its figures in `paper/figures/` |
+| `docs/STUDENT_GUIDE.md` | One-session lab for learning Claude Code with this project |
 
 ## Reproducing the results
 
@@ -36,3 +37,17 @@ The runner is seeded, so the same replicate count regenerates the same tables an
 ## Model parameters
 
 Defaults and the experiment grid are in `Params` in `model/elevator_sim.py`: room occupancy, transfer share, adjacent-floor share, floor-group offset, walking and backpack compliance, car capacity, and travel, door, and boarding times.
+
+## Future work (ranked)
+
+The next step is better evidence, not more model. In order of importance (details in the paper's Future work section; none is done unless noted):
+
+1. **Validate against observation.** Record 5-10 changeovers (arrival intervals, boarding counts, car occupancy, queues, waits); calibrate on some and validate on the rest. Optionally, with building approval and within posted capacity limits, a small field test of car occupancy with and without a request to hold backpacks in front.
+2. **Verify the simulator.** Automated tests (passenger accounting, capacity, movement, boarding, dispatch, termination) and small hand-computable scenarios. Fixed: the 3,600 s cutoff used to drop riders still waiting (up to 17 per replicate at full occupancy) from the wait and lateness statistics. The cutoff is now a 14,400 s backstop that no scenario reaches, unserved riders count as late, and results include an `unserved` column. Only the two full-occupancy rows changed, by under 0.2 points of lateness. The tests are still to be written.
+3. **Systematic parameter sensitivity** aimed at break-even points: extra seats from backpacks (0-3), baseline capacity, occupancy, arrival concentration, boarding and door times.
+4. **Structural uncertainty.** Two or three dispatch policies, alternative arrival and leaving behavior, students who leave the queue, per-rider compliance.
+5. **Stronger statistics.** Confidence intervals on paired differences (scenarios already share seeds), plus journey time, P90/P95 delay, on-time rate, unserved counts, and results by floor and bank.
+6. **Scheduling offsets over several consecutive periods**, or drop them. The current offset results are preliminary.
+7. **Claims at the right evidence level.** Separate model results, robust findings, and empirical predictions. Partly done in the current draft.
+
+Deferred to separate projects: a full-day simulator, optimization of room assignments, and detailed pedestrian modelling.

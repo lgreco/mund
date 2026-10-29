@@ -1,0 +1,73 @@
+\subsection{Structural assumptions}
+\label{sec:struct}
+
+Table~\ref{tab:struct} lists the assumptions that are built into the simulator's rules rather than exposed as
+parameters, with where each lives in the code and which results we judge most exposed to it. The last column is
+our reasoning, not a test: none of these assumptions has been varied, so we do not know how large any of the
+effects is.
+
+{\small
+\begin{longtable}{>{\raggedright\arraybackslash}p{1.45in}>{\raggedright\arraybackslash}p{2.6in}>{\raggedright\arraybackslash}p{1.9in}}
+\caption{Structural assumptions embedded in the simulator. None is varied in any experiment.}
+\label{tab:struct}\\
+\toprule
+Assumption & What the simulator does & Results most exposed\\
+\midrule
+\endfirsthead
+\toprule
+Assumption & What the simulator does & Results most exposed\\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+Students never leave the queue &
+Every student who is not a designated walker waits for an elevator, however long the line. Nobody takes the stairs
+on their own, gives up, or leaves early (\texttt{split\_walkers}). The walking measure is applied to a baseline in
+which no one walks. &
+Baseline wait and lateness; the size of the walking effect; the benefit of any measure that shortens lines.\\
+Compliance is a per-car coin flip &
+Backpack compliance $b$ adds exactly two seats to a car load with probability $b$, independently of the car, the
+floor, and the riders (\texttt{fresh\_capacity}). Compliance is never clustered by class, floor, or time of day, and the
+bonus does not depend on the base capacity or on how many people are waiting. &
+The size of the backpack effect; its near-linearity in compliance; the ranking of backpacks over walking.\\
+Space is the only constraint on boarding &
+Everyone in line boards if there is room; nobody declines a crowded car or waits for the next one. Boarding is
+first-in-first-out, and an empty car takes the direction of the first person in line (\texttt{serve\_floor}). &
+Wait and the share of empty stops.\\
+A stop costs only door time &
+Travel is a constant 3~s per floor with no acceleration. Everything else about stopping is folded into a fixed
+8~s plus 1~s per rider (\texttt{t\_door}, \texttt{t\_pax}). The door-time sweep varies the value of this cost, not its form. &
+The cost of empty stops, hence the value of removing riders from lower floors; the gap between short and long trips.\\
+Controller and queues &
+Collective rule; one shared queue per floor from which any eligible car draws; the two-car bank serves lower floors on
+the same terms as the four-car bank; no zoning, no priority for the upper floors. Cars start the period at random
+floors, with no backlog from the previous period (\texttt{World}, \texttt{depart}). &
+The finding that floor~10 is the worst floor; the offset results; absolute clearing times.\\
+Demand is generated independently and in full &
+Outgoing and incoming occupancy of a room are independent draws with the same $p_{occ}$. Every seat of every incoming
+class is filled, and nobody is absent. Leavers depart uniformly in the first two minutes, with no early or late
+dismissal; non-transferring arrivals come only through the lobby on a triangular schedule; transfers choose a room in
+proportion to open seats (\texttt{build\_demand}). &
+Queue size and shape; lateness; the effect of the offset.\\
+Parameters tuned to the story &
+$p_{occ}$ was chosen so that the baseline shows a long line without collapse, and the transfer share $q$ and
+adjacent share $a$ are not measured. That the baseline resembles the description is therefore not evidence that the
+model is right. &
+All absolute levels.\\
+Lateness is a hard threshold &
+A student is late if they arrive after the nominal class start; there is no grace period and no instructor discretion.
+Offset classes keep their length. &
+Lateness percentages; the offset trade-off.\\
+Every changeover is the same &
+One 15-minute period, the same for the 50-minute and 75-minute patterns, and for every block of the day. &
+Any statement about a particular time of day.\\
+\end{longtable}
+}
+
+Two points follow. First, the sensitivity analyses in Section~\ref{sec:occ} vary parameters inside this fixed
+structure. They show that the ordering of the measures is robust to occupancy, door time, and adjacent-floor
+traffic. They do not show that it would survive different student behavior or a different controller. Second, the
+effects are not all of one kind. Some assumptions, such as students never leaving the queue, make the baseline look
+worse and could shrink the apparent benefit of every measure if they were relaxed. Others, such as the
+coin-flip compliance, affect how much each measure achieves. We have not tested any of this, and we have not
+tried to guess its net direction.

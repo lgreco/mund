@@ -1,0 +1,54 @@
+\section{Future work}
+\label{sec:future}
+
+The next step is to shift from modeling to validation. The simulator already has enough detail to produce interesting results and it remains to be seen whether those results are meaningful. We therefore rank the work below by how much it would
+strengthen this project, and defer additions such as a full-day simulator, optimization of room assignments, and
+detailed pedestrian modelling to separate projects. None of the items has been done unless stated.
+
+\begin{enumerate}
+\item \textbf{Validate against observation.} Record 5--10 class changeovers: elevator arrival intervals, boarding
+and alighting counts, car occupancy, queue lengths, and waits at selected floors. Split the data into calibration
+changeovers, used to choose parameters, and validation changeovers, used only to test whether the calibrated model
+predicts congestion it has not seen. This also replaces the tuned $p_{occ}$. A small, controlled field experiment,
+subject to building approval and posted capacity limits, would compare car occupancy under ordinary behavior and
+under an explicit request to hold backpacks in front. It tests the assumption behind our strongest result: if the
+gain is about two riders, the model stands; if it is one, we rerun; if there is none, that is an equally useful
+finding.
+\item \textbf{Verify the simulator independently of the experiments.} Add automated tests for passenger
+accounting, car capacity, movement, boarding rules, dispatch decisions, and termination, plus small deterministic
+scenarios that can be worked by hand (for example, one car, two floors, three passengers at fixed times). This
+includes one reporting defect that we have fixed. The simulator used to stop at 3{,}600~s and drop riders still
+waiting from the wait and lateness statistics. This never happened at $p_{occ}=0.4$, but in the baseline at full
+occupancy up to 17 riders per replicate were dropped. The cutoff is now a 14{,}400~s backstop that no scenario
+reaches (the slowest clears in about 3{,}800~s), riders still waiting would count as late, and the unserved count is
+a column in every result table. Rerunning changed only two rows (the full-occupancy baseline and combined policy),
+and by less than 0.2 points of lateness; every other table is unchanged. The tests described above should confirm
+that this accounting is correct.
+\item \textbf{Systematic parameter sensitivity, aimed at break-even points.} Repeat the experiments over a grid:
+extra seats from backpacks (0, 1, 2, 3), baseline capacity, occupancy, concentrated versus dispersed arrivals, and
+faster and slower boarding and door times. The goal is not more tables but the conditions under which a conclusion
+changes, for example the extra capacity below which the backpack measure no longer beats walking.
+\item \textbf{Structural uncertainty.} Compare two or three plausible dispatch policies, alternative arrival and
+leaving behavior, and the other structural assumptions in Table~\ref{tab:struct} (students who leave the queue,
+per-rider compliance). We need not reverse-engineer the real controller, but we should show that the conclusions
+do not depend on an arbitrary implementation choice.
+\item \textbf{Stronger statistical reporting.} Report confidence intervals for differences between measures. The
+scenarios already share random seeds, so the demand is common to all of them and paired differences are
+available, but this paper reports only per-scenario standard errors. Separate statistical from modelling
+uncertainty explicitly. Add outcomes beyond mean wait: total journey time, 90th- and 95th-percentile delay, on-time
+arrival, unserved counts, and results by floor and by bank, so that a gain on average is not bought with worse
+service on the upper floors.
+\item \textbf{Evaluate scheduling offsets over several consecutive periods}, or remove them from the study. A
+start-time offset affects transfers throughout the day, so a single changeover cannot support a conclusion. Until
+then the offset results are preliminary.
+\item \textbf{State the claims at the right level of evidence.} Distinguish model results (what follows under the
+stated assumptions), robust findings (what survives plausible alternatives), and empirical predictions (what we
+expect in the actual building). This paper is a simulation framework with preliminary estimates of the effect of two
+measures; it is not yet a basis for operational changes. Almost all its conclusions are model results, only
+partly robust findings (ordering under three parameter sweeps), and not empirical predictions. This item is cheap and
+partly done in this version, by the structural-assumptions table and the reworded conclusions; it should be
+revisited as items 1--6 are completed.
+\end{enumerate}
+
+If time is limited, the minimum for a substantially stronger paper is items 2, 1, 3--4, and 5, together with the
+claims in item 7.

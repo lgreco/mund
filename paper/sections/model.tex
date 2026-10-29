@@ -1,0 +1,52 @@
+\section{Model}
+
+\subsection{Demand}
+
+One run simulates a single passing period. Time zero is the nominal end of the outgoing class and
+$T=900$ seconds is the nominal start of the incoming class. Each classroom holds an outgoing and an incoming class
+independently with probability $p_{occ}$; each class has between 15 and 25 students, uniformly at random.
+Leavers depart uniformly over the first two minutes. A fraction $q$ of leavers go on to another class in the
+building (assigned to an incoming room with probability proportional to remaining seats, and to an adjacent
+floor with probability $a$); the rest leave via the lobby. The seats in incoming rooms that transfers do not fill
+are occupied by students who arrive from the lobby with a triangular distribution between ten and one minutes before
+class start, peaking three minutes before. Every student is ready at an elevator the moment they leave their room
+or enter the lobby.
+
+\subsection{Elevators}
+
+Cars are simulated in one-second steps. The four-car bank serves floors 1--9 and the two-car bank floors 1--14.
+Passengers whose trip includes a floor above 9 can use only the two-car bank. Cars follow a collective rule:
+continue in the current direction while there are riders to drop or calls ahead; otherwise reverse or go idle.
+Idle cars go to the nearest unclaimed call. Crucially, cars do \emph{not} skip a floor when full: a car stops for
+any call in its direction of travel and then boards as many waiting people as it has room for. This builds in the
+empty stops observed in practice; how often they occur in the model (14.5\% of stops in the baseline) is an
+output that we have not compared with observation. A car's capacity for a trip is drawn uniformly from
+$\{4,5,6\}$, and with backpack compliance $b$ it is increased by two with probability $b$, independently for each
+car load.
+
+Timing parameters are 3 seconds between floors (6 seconds from floor~1 to~2), 8 seconds of fixed door time per
+stop, and 1 second per rider boarding or alighting. These are estimates, not measurements. They are the
+\emph{parameters} of the model. The rules above, and the demand rules of the previous subsection, are its
+\emph{structure}, discussed in Section~\ref{sec:struct}.
+
+\subsection{Behavioral measures and the offset}
+
+\emph{Walking.} A rider whose trip starts on floor 2 or 3 and goes down walks with probability $w_d$ (0.8 in the
+main experiments). A rider going up to floor 2 walks with probability 0.5 and to floor~3 with probability 0.2,
+reflecting the atrium. Walkers take 20 seconds per flight (40 for the atrium) and do not use the elevators.
+\emph{Backpacks.} The compliance parameter $b$ above, set to 1 in the main experiments. \emph{Offset.}
+Classes on floors 10--14 start and end $o$ minutes earlier than the grid ($o\in\{0,5,10\}$), preserving their
+length. A student moving from a lower floor to an upper floor therefore has $15-o$ minutes between classes.
+
+\subsection{Metrics}
+
+For each run we record the mean and 90th-percentile wait (from when a rider is ready to when the rider boards),
+the share of students who reach their next class after it starts (walkers included), the share of stops at
+which nobody boards or alights, and the time to clear all queues. All figures average 60 replicates with
+different random seeds; we report standard errors of the mean for wait and lateness. Wait statistics cover only
+students who ride (walkers wait zero and are excluded), lateness includes walkers, and the clearing time is read on
+the registrar's clock, from the nominal end of the outgoing class, for both floor groups. The standard errors
+measure replicate-to-replicate variation \emph{within the model}. They say nothing about whether the model is
+right.
+
+\input{sections/structural_assumptions}

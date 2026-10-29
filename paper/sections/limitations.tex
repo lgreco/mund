@@ -1,0 +1,36 @@
+\section{Limitations}
+
+Two kinds of assumption limit this study, and the second matters more than it may appear.
+
+\begin{itemize}
+\item \textbf{Parameters are estimates.} Every timing parameter (travel, door, boarding) and every behavioral
+share (leaving spread, arrival distribution, transfer share, compliance, the two extra seats per car) is an
+estimate, not a measurement. We varied several of them and the ordering of the measures held.
+\item \textbf{Structure is assumed, and was not varied.} The simulator fixes how students behave in a queue,
+how cars decide where to stop, how compliance is represented, and how demand is generated
+(Table~\ref{tab:struct}). These choices are the same in every experiment, so no table in this paper measures their
+influence, and they may shape the results as much as the parameters we vary. The robustness reported in
+Section~\ref{sec:occ} should be read as robustness within one structure.
+\item \textbf{No validation.} We calibrated $p_{occ}$ to match a qualitative description and compared nothing to
+observed queues, wait times, or stop counts. Agreement with the description is not evidence that the structure is
+right. The standard errors reflect replicate noise, not model error.
+\item \textbf{Relative results only.} The model produces comparisons between measures that we believe are
+reasonable, conditional on the points above. Absolute minutes and percentages should not be quoted as facts about
+Mundelein Center.
+\item \textbf{Unserved riders.} Earlier runs ended at 3{,}600~s and dropped riders still waiting, which understated
+congestion at the highest occupancies. The cutoff is now a backstop that no scenario reaches, unserved riders would
+count as late, and unserved counts are reported (Section~\ref{sec:future}, item~2). The accounting itself has not yet
+been tested independently.
+\item \textbf{Comparisons are not tested.} Measures are compared by their per-scenario means and standard errors,
+not by confidence intervals on paired differences, and no outcome other than the ones listed in the Metrics
+subsection is reported.
+\item \textbf{One passing period.} We simulate one changeover from an empty building. Backlog from the previous
+changeover would make the baseline worse.
+\item \textbf{Uniform schedule.} Without a room-by-block schedule we assume every room is in use with probability
+$p_{occ}$ in every block and cannot distinguish heavy blocks from light ones.
+\item \textbf{Simple dispatching.} The real controller is proprietary and may behave differently. We deliberately
+did not model a full-car bypass or down-peak mode, because these were out of scope.
+\item \textbf{Static students.} Students do not adapt by leaving earlier, taking the stairs, or skipping the
+line when they see it. This is one of the structural assumptions with the clearest real-world counterpart, since
+adaptation would reduce both waits and lateness in the baseline.
+\end{itemize}

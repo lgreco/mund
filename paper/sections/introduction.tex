@@ -1,0 +1,33 @@
+\section{Introduction}
+
+Mundelein Center is a tall, narrow classroom building. Its classrooms are spread from floor~1 to floor~14, and
+all of them are reached through two elevator banks of four and two cars. Only the two-car bank travels above
+floor~9. Every 75 minutes on Tuesdays and Thursdays and every 50 minutes on Mondays, Wednesdays, and
+Fridays, students leaving one class and arriving for the next converge on the elevators. Cars leave the upper
+floors carrying four to six people and still stop at every floor below, even though they are physically full,
+so students on the lower floors wait for cars that cannot take them.
+
+We focus on classes that end before 4~PM and on two behavioral measures that cost nothing to implement: asking
+students to take their backpacks off and hold them in front (our estimate: two more riders per car), and asking
+students on floors 2 and~3 to walk. A third question is scheduling: because the registrar's grid fixes the
+class times, can the upper floors run on a shifted clock so that their peak does not coincide with the rest of
+the building?
+
+The contribution is a transparent, reproducible model, not a measurement; the classical treatments of elevator traffic~\cite{barney,strakosch} motivate its structure. All code, parameters, and result
+tables accompany this paper (Section~\ref{sec:repro}).
+
+A reader should keep two kinds of uncertainty apart. The first is \emph{parametric}: elevator speed, door time,
+boarding time per rider, the number of extra riders gained by holding backpacks, and the compliance rates are
+estimates. We can vary them, and we do. The second is \emph{structural}: the simulator encodes a particular
+account of how students behave in a queue and how the elevators operate, and that account is not a parameter that
+can be swept. For example, the model gives students no way to give up on the line, represents partial compliance
+as a coin flip per car, and fills every seat of every class. A structural assumption can change a result as much
+as any parameter we vary, but it will not show up in a sensitivity table, because it is the same in every run.
+Section~\ref{sec:struct} lists these assumptions, and the results, discussion, and recommendations are written
+with them in view.
+
+We also state what kind of contribution this is. The paper presents a simulation framework and preliminary
+estimates of the effect of two measures. Its conclusions are model results, that is, what follows under stated
+assumptions. Some are robust to the parameters we varied, but none is yet an empirical prediction for the building,
+and the paper is not a basis for operational change. Section~\ref{sec:future} ranks the work needed to move from
+model results toward evidence.

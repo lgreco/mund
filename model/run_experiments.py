@@ -18,10 +18,13 @@ from elevator_sim import Params, ROOMS, replicate, mean_of
 HERE = os.path.dirname(os.path.abspath(__file__))
 RESULTS = os.path.join(HERE, "..", "results")
 FIGURES = os.path.join(HERE, "..", "paper", "figures")
-BASE = Params(p_occ=0.4)
-METRICS = ("mean_wait", "p90_wait", "late_frac", "empty_stop_frac", "clear_time", "riders",
+BASE = Params(p_occ=0.4)  # chosen so the baseline shows a long line without collapse
+# Columns written to every CSV, in order; se_* are standard errors of the replicate means
+METRICS = ("mean_wait", "p90_wait", "late_frac", "empty_stop_frac", "clear_time", "riders", "unserved",
            "se_mean_wait", "se_late_frac")
 
+# Behavior-change policies; each dict overrides Params fields. Walking compliance is
+# 0.8 down / 0.5 up to floor 2 / 0.2 up to floor 3.
 POLICIES = {
     "Baseline": {},
     "Backpacks": {"backpack": 1.0},
@@ -31,6 +34,7 @@ POLICIES = {
 
 
 def std_err(results, key):
+    """Standard error of the mean of `key` across replicate results (needs at least two)."""
     vals = [r[key] for r in results]
     mu = sum(vals) / len(vals)
     var = sum((v - mu) ** 2 for v in vals) / (len(vals) - 1)
@@ -38,6 +42,11 @@ def std_err(results, key):
 
 
 def job(args):
+    """Pool worker: run n replicates of one scenario and return a row of averaged metrics.
+
+    args is (label, params, n). The row also carries the per-replicate queue
+    series and the mean wait by floor, which the figures use.
+    """
     label, prm, n = args
     rs = replicate(prm, n)
     row = {"label": label}
@@ -50,6 +59,10 @@ def job(args):
 
 
 def write_csv(name, rows, extra_keys):
+    """Write rows to results/name: the extra_keys columns first, then METRICS rounded to 4 places.
+
+    Returns the path written.
+    """
     os.makedirs(RESULTS, exist_ok=True)
     path = os.path.join(RESULTS, name)
     with open(path, "w", newline="") as fh:
@@ -61,6 +74,7 @@ def write_csv(name, rows, extra_keys):
 
 
 def save(fig, name):
+    """Save a figure as PDF under paper/figures and close it."""
     os.makedirs(FIGURES, exist_ok=True)
     fig.tight_layout()
     fig.savefig(os.path.join(FIGURES, name))
@@ -68,6 +82,9 @@ def save(fig, name):
 
 
 def main(n):
+    """Build every scenario, run n replicates each in parallel, then write the CSVs and figures."""
+    # Each job is (label, params, n); tags[i] describes jobs[i] so results can be
+    # grouped by experiment kind afterwards: policy, adj, occ, bp, wd, door, q, ext.
     jobs, tags = [], []
     for pname, kw in POLICIES.items():
         for off in (0, 5, 10):
@@ -108,9 +125,10 @@ def main(n):
     table = list(zip(tags, out))
 
     def pick(kind):
+        """(tag, row) pairs for one experiment kind."""
         return [(t, r) for t, r in table if t[0] == kind]
 
-    # Table 1: policy x offset (adj_share default)
+    # CSV tables, one per experiment. Table 1: policy x offset (adj_share default)
     rows = []
     for t, r in pick("policy"):
         r2 = dict(r, policy=t[1], offset=t[2])
