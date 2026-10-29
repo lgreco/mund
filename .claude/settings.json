@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(make test)",
+      "Bash(make paper)",
+      "Bash(make venv)",
+      "Bash(make help)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(.venv/bin/python -m unittest*)"
+    ],
+    "ask": [
+      "Bash(make results*)",
+      "Bash(make all*)",
+      "Bash(git push*)"
+    ],
+    "deny": [
+      "Bash(git push --force*)",
+      "Bash(rm -rf*)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/post_edit.sh",
+            "timeout": 120,
+            "statusMessage": "Checking the edit (tests or paper build)..."
+          }
+        ]
+      }
+    ]
+  }
+}

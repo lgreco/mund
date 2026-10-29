@@ -34,12 +34,12 @@ Read `CLAUDE.md` first. It records the project's history, and each step below ma
 
 ```sh
 git clone https://github.com/lgreco/mund && cd mund
-python3 -m venv .venv && source .venv/bin/activate
-pip install numpy matplotlib
+make venv
 claude
 ```
 
-Check that `cd model && python run_experiments.py 5` runs (5 replicates is enough for a smoke test).
+Check that `make results REPS=5` runs (5 replicates is enough for a smoke test). It overwrites `results/` and
+`paper/figures/`, so run `git restore results paper/figures` afterward unless you mean to keep the output.
 
 ## Exercises
 
@@ -63,9 +63,10 @@ Goal: see that planning is cheaper than undoing.
 
 ### 4. Write the missing tests (20 min)
 
-The README says verification tests are "still to be written". Ask Claude for tests of passenger accounting
-(everyone who arrives is eventually served or counted as unserved) and car capacity. Then **read the tests**: do
-they test the model or just restate the code? Try breaking the simulator on purpose and confirm a test fails.
+A starter suite is in `tests/` (run `make test`). The README still lists hand-computable scenarios and dispatch
+tests as missing. Ask Claude for one: for example, one car, one floor, three riders, where you can predict every wait
+by hand. Then **read the test**: does it test the model or just restate the code? Break the simulator on purpose
+and confirm a test fails.
 
 ### 5. Add a feature, keep the rules (15 min)
 
@@ -77,6 +78,27 @@ Did Claude follow the conventions without being reminded? That is what `CLAUDE.m
 
 Rerun the experiments, then ask Claude to update the affected table in `paper/sections/results.tex` and rebuild
 the PDF. Check the numbers in the text against `results/*.csv` yourself.
+
+### 7. Let the harness check Claude (10 min)
+
+Open `.claude/settings.json` and `.claude/hooks/post_edit.sh`. Ask Claude to make a deliberately wrong edit to a
+test, and watch the hook run the suite and send the failure back. Then run `/rerun-study` with `REPS=5` in mind (it asks
+before running `make results`) and the `assumption-reviewer` subagent on the paper. Compare what the fresh-context
+reviewer finds with what you found yourself.
+
+## The agentic toolbox in this repo
+
+| Idea | Where it is here | Why it matters |
+|---|---|---|
+| A verifier Claude can run | `make test` | Claude iterates until the check passes instead of asking you |
+| Hooks | `.claude/hooks/post_edit.sh` | The harness runs them, so they cannot be forgotten or skipped |
+| Subagents | `.claude/agents/` | A fresh context reviews without the author's blind spots |
+| Skills / slash commands | `.claude/skills/rerun-study/` | A repeated workflow becomes one command |
+| Permissions | `.claude/settings.json` | Fewer prompts for safe commands, a guardrail on risky ones |
+| Headless and CI | `.github/workflows/ci.yml`, `claude -p` | The same checks run without you in the loop |
+| Parallel worktrees | `claude --worktree <name>` | Try alternative dispatch policies side by side, then compare |
+
+Commit `.claude/` to git: it is the part of the project that tells the next person (or the next session) how to work safely.
 
 ## Habits to take with you
 
