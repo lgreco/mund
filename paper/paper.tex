@@ -1,0 +1,341 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{caption}
+
+\graphicspath{{figures/}}
+
+\title{Easing Elevator Congestion in a Vertical Classroom Building:\\
+A Simulation Study of Mundelein Center}
+
+\author{Leo Irakliotis\thanks{Loyola University Chicago.}
+\and Claude\thanks{Anthropic. The simulation and the first draft of this paper were produced by Claude at the
+direction of the first author.}
+\and The COMP~363 students of academic years 2024--25 and 2025--26\thanks{Students enrolled in COMP~363 during these two academic years are
+referenced here collectively.}}
+
+\date{October 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Mundelein Center, on Loyola University Chicago's Lakeshore Campus, holds 54 general-purpose classrooms on twelve
+floors but is served by only two elevator banks: four cars that reach floor~9 and two cars that reach floor~14.
+Each class changeover produces long lines. We build a discrete-time simulation of one 15-minute passing period
+and use it to compare two low-cost behavioral measures: holding backpacks in front, and walking to and from
+floors 2 and~3. We also test whether running floors 10--14 on a time offset spreads the load. In the baseline
+configuration, mean waiting time is 5.2 minutes and 23\% of students arrive after class has started. Backpack
+compliance cuts mean wait by 31\% and nearly halves lateness; walking removes only 6\% of the wait; together they cut
+mean wait by 35\% and lateness to 11\%. Offsetting the upper floors by 5--10 minutes shortens the time to clear
+the queue by about 20\% but, combined with the other measures, \emph{raises} the share of late students.
+The qualitative ordering of the measures is stable across occupancy, door time, and adjacent-floor traffic. The
+absolute numbers are not measurements: every timing parameter is an assumption, and we close with the timing study
+needed to calibrate the model.
+\end{abstract}
+
+\section{Introduction}
+
+Mundelein Center is a tall, narrow classroom building. Its classrooms are spread from floor~1 to floor~14, and
+all of them are reached through two elevator banks of four and two cars. Only the two-car bank travels above
+floor~9. Every 75 minutes on Tuesdays and Thursdays and every 50 minutes on Mondays, Wednesdays, and
+Fridays, students leaving one class and arriving for the next converge on the elevators. Cars leave the upper
+floors carrying four to six people and still stop at every floor below, even though they are physically full,
+so students on the lower floors wait for cars that cannot take them.
+
+We focus on classes that end before 4~PM and on two behavioral measures that cost nothing to implement: asking
+students to take their backpacks off and hold them in front (our estimate: two more riders per car), and asking
+students on floors 2 and~3 to walk. A third question is scheduling: because the registrar's grid fixes the
+class times, can the upper floors run on a shifted clock so that their peak does not coincide with the rest of
+the building?
+
+The contribution is a transparent, reproducible model, not a measurement; the classical treatments of elevator traffic~\cite{barney,strakosch} motivate its structure. All code, parameters, and result
+tables accompany this paper (Section~\ref{sec:repro}).
+
+\section{Background}
+
+\subsection{The building and its classrooms}
+
+We counted classrooms from the university's classroom A/V listing for Mundelein Center. Table~\ref{tab:rooms} gives the
+count per floor. There are no classrooms on floors 8 and~9, so the one-bank limit at floor~9 splits the
+building cleanly into a lower group (floors 1--7, 45 rooms) and an upper group (floors 10--14, 9 rooms) that only
+the two-car bank can reach.
+
+\begin{table}[h]
+\centering
+\caption{Classrooms per floor in Mundelein Center.}
+\label{tab:rooms}
+\begin{tabular}{lcccccccccccc}
+\toprule
+Floor & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 10 & 11 & 12 & 13 & 14\\
+\midrule
+Rooms & 2 & 4 & 5 & 8 & 10 & 11 & 5 & 4 & 1 & 1 & 1 & 2\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Floor~1 is an atrium lobby, and the stairs from floor~1 to floor~2 feel like two ordinary flights. Students
+leave the building through the lobby.
+
+\subsection{The scheduling grid}
+
+The Registrar's standard grid~\cite{luc-grid} defines seven 50-minute Monday--Wednesday--Friday blocks (8:15 to
+3:35) and five 75-minute Tuesday--Thursday blocks (8:30 to 3:45) before the evening blocks, which start at
+4:15 and are outside the scope of this study. Every consecutive pair of blocks, in either pattern, is separated
+by a 15-minute passing period. Our simulation models that period.
+
+Classes seat 30--35 students, but enrollment is often 15--25. Elevator cars are rated for 3{,}000~lb, which is
+roughly 17--20 riders by weight; observed loads are four to six, so space, not weight, is the binding limit.
+
+\section{Model}
+
+\subsection{Demand}
+
+One run simulates a single passing period. Time zero is the nominal end of the outgoing class and
+$T=900$ seconds is the nominal start of the incoming class. Each classroom holds an outgoing and an incoming class
+independently with probability $p_{occ}$; each class has between 15 and 25 students, uniformly at random.
+Leavers depart uniformly over the first two minutes. A fraction $q$ of leavers go on to another class in the
+building (assigned to an incoming room with probability proportional to remaining seats, and to an adjacent
+floor with probability $a$); the rest leave via the lobby. The seats in incoming rooms that transfers do not fill
+are occupied by students who arrive from the lobby with a triangular distribution over the ten minutes before
+class start, peaking three minutes before.
+
+\subsection{Elevators}
+
+Cars are simulated in one-second steps. The four-car bank serves floors 1--9 and the two-car bank floors 1--14.
+Passengers whose trip includes a floor above 9 can use only the two-car bank. Cars follow a collective rule:
+continue in the current direction while there are riders to drop or calls ahead; otherwise reverse or go idle.
+Idle cars go to the nearest unclaimed call. Crucially, cars do \emph{not} skip a floor when full: a car stops for
+any call in its direction of travel and then boards as many waiting people as it has room for. This reproduces the
+empty stops observed in practice. A car's capacity for a trip is drawn uniformly from $\{4,5,6\}$, and with
+backpack compliance $b$ it is increased by two with probability $b$.
+
+Timing assumptions are 3 seconds between floors (6 seconds from floor~1 to~2), 8 seconds of fixed door time per
+stop, and 1 second per rider boarding or alighting. These are assumptions, not measurements.
+
+\subsection{Behavioral measures and the offset}
+
+\emph{Walking.} A rider whose trip starts on floor 2 or 3 and goes down walks with probability $w_d$ (0.8 in the
+main experiments). A rider going up to floor 2 walks with probability 0.5 and to floor~3 with probability 0.2,
+reflecting the atrium. Walkers take 20 seconds per flight (40 for the atrium) and do not use the elevators.
+\emph{Backpacks.} The compliance parameter $b$ above, set to 1 in the main experiments. \emph{Offset.}
+Classes on floors 10--14 start and end $o$ minutes earlier than the grid ($o\in\{0,5,10\}$), preserving their
+length. A student moving from a lower floor to an upper floor therefore has $15-o$ minutes between classes.
+
+\subsection{Metrics}
+
+For each run we record the mean and 90th-percentile wait (from when a rider is ready to when the rider boards),
+the share of students who reach their next class after it starts (walkers included), the share of stops at
+which nobody boards or alights, and the time to clear all queues. All figures average 60 replicates with
+different random seeds; we report standard errors of the mean for wait and lateness.
+
+\section{Results}
+
+The main experiments use $p_{occ}=0.4$ (about 570 elevator riders per changeover), $q=0.6$, and $a=0.2$.
+We chose $p_{occ}$ so that the baseline reproduces the qualitative description of a long line before every
+class without collapse; Section~\ref{sec:occ} shows how the results change with occupancy.
+
+\subsection{Behavioral measures}
+
+\begin{table}[h]
+\centering
+\caption{Policies without an offset ($o=0$). Wait is mean $\pm$ standard error; late is the share of students
+arriving after class start.}
+\label{tab:policy}
+\begin{tabular}{lrrrrr}
+\toprule
+Policy & Mean wait (s) & P90 wait (min) & Late (\%) & Empty stops (\%) & Clear (min)\\
+\midrule
+Baseline   & $314 \pm 8$ & 12.4 & $22.9 \pm 1.4$ & 14.5 & 25.0\\
+Backpacks  & $217 \pm 6$ &  8.7 & $12.7 \pm 1.2$ &  9.3 & 20.2\\
+Walking    & $294 \pm 8$ & 11.9 & $19.6 \pm 1.3$ & 13.9 & 24.6\\
+Both       & $203 \pm 6$ &  8.5 & $11.0 \pm 1.0$ &  8.7 & 19.9\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Table~\ref{tab:policy} and Figure~\ref{fig:wait} show the headline result. Holding backpacks in front reduces
+mean wait by 31\% and nearly halves the share of late students. Walking is much weaker: it removes only about
+7\% of elevator riders, because floors 2 and~3 hold 9 of the 54 rooms and only partial compliance is
+realistic on the way up. Together the two measures reduce mean wait by 35\%, to 3.4 minutes, and lateness
+from 22.9\% to 11.0\%. The effect of backpacks is nearly linear in compliance: each additional 25\% of
+compliance removes roughly 20--30 seconds of mean wait (Figure~\ref{fig:comp}).
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.8\linewidth]{fig_wait_policy_offset.pdf}
+\caption{Mean wait by policy and offset of floors 10--14.}
+\label{fig:wait}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.8\linewidth]{fig_compliance.pdf}
+\caption{Mean wait as compliance grows. Left: backpacks. Right: walking (down-compliance shown; up-compliance
+scaled at 0.6 and 0.25 for floors 2 and 3).}
+\label{fig:comp}
+\end{figure}
+
+Figure~\ref{fig:queue} shows why. Immediately after class ends, about 300 people are waiting in the baseline
+and the queue drains slowly; the arriving students then add to a backlog that has not cleared when the
+next class starts. The combined measures lower the peak and, more importantly, speed up the drain.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.8\linewidth]{fig_queue_series.pdf}
+\caption{People waiting for an elevator over the passing period (mean of replicates, $o=0$).}
+\label{fig:queue}
+\end{figure}
+
+\subsection{Where the waiting happens}
+
+Waits are not uniform across the building (Figure~\ref{fig:floor}). Floor~10, the first floor served only by the
+two-car bank, is the worst: riders there wait about 10 minutes in the baseline and 7.5 minutes with both
+measures. Floors 5--7 are next, at about 5--6 minutes. The measures help everywhere but do not remove the upper-floor
+bottleneck, which comes from the structure of the banks.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.8\linewidth]{fig_wait_by_floor.pdf}
+\caption{Mean wait by origin floor, baseline versus both measures ($o=0$).}
+\label{fig:floor}
+\end{figure}
+
+\subsection{Time-multiplexing the upper floors}
+
+\begin{table}[h]
+\centering
+\caption{Effect of running floors 10--14 $o$ minutes early.}
+\label{tab:offset}
+\begin{tabular}{lrrrr}
+\toprule
+Policy & Offset (min) & Mean wait (s) & Late (\%) & Clear (min)\\
+\midrule
+Baseline & 0  & 314 & 22.9 & 25.0\\
+Baseline & 5  & 305 & 24.2 & 22.3\\
+Baseline & 10 & 284 & 23.2 & 19.5\\
+Both     & 0  & 203 & 11.0 & 19.9\\
+Both     & 5  & 192 & 12.5 & 17.5\\
+Both     & 10 & 179 & 14.4 & 15.9\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+An offset trades one problem for another (Table~\ref{tab:offset}, Figures~\ref{fig:wait} and~\ref{fig:late}).
+A 10-minute offset shortens the mean wait by about 9\% in the baseline and 12\% with both measures, and shortens
+the time to clear the queue by 22\% and 20\%. It does not reduce lateness: in the baseline the change is within
+noise, and with both measures lateness \emph{increases} from 11.0\% to 14.4\%, because students moving from a
+lower floor to an upper one now have only five minutes. Students moving between adjacent floors are
+unaffected, since the group boundary falls between floors 7 and 10, which have no classrooms in between;
+the cost falls entirely on students changing between the lower and upper groups. A 5-minute offset gives
+about half of the reduction in clearing time at about half of the added lateness, so we regard it as the more defensible choice if the
+registrar would consider off-grid start times.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.8\linewidth]{fig_late_policy_offset.pdf}
+\caption{Share of students arriving after class start, by policy and offset.}
+\label{fig:late}
+\end{figure}
+
+\subsection{Sensitivity}
+\label{sec:occ}
+
+\paragraph{Occupancy.} The absolute waits depend strongly on how many rooms are in use
+(Figure~\ref{fig:occ}): from 2.6 minutes at 20\% occupancy to 17 minutes at full occupancy in the baseline.
+The relative benefit of backpacks plus walking is stable, between 29\% and 36\% across the whole range.
+At 20\% occupancy the baseline already has 7.9\% late students, rising to 62\% at full occupancy.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.8\linewidth]{fig_occupancy_sweep.pdf}
+\caption{Mean wait as room occupancy grows.}
+\label{fig:occ}
+\end{figure}
+
+\paragraph{Door time.} Doubling the door time per stop from 5 to 12 seconds raises the baseline mean wait from 236
+to 432 seconds, while the relative benefit of both measures stays between 34\% and 36\%. Door time matters
+because every empty stop costs a full door cycle; this is the direct cost of the lack of a full-car bypass.
+
+\paragraph{Adjacent-floor transfers.} Varying the share of transfers that go to an adjacent floor from 10\% to 30\%
+changes the late share by only 1--2.5 points in either direction (Figure~\ref{fig:adj}), because without stairs the
+adjacent-floor riders still use the elevators. Offering stairs for one-floor trips, an extension beyond the
+two measures requested, reduces the combined-policy mean wait from 196 to 176 seconds
+(about 10\%) at an adjacent share of 30\% and 80\% stair use, and the late share from 10.4\% to 9.1\%.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.8\linewidth]{fig_adjacent_share.pdf}
+\caption{Share of late students against the adjacent-floor share of transfers.}
+\label{fig:adj}
+\end{figure}
+
+\section{Discussion}
+
+\paragraph{Backpacks matter most.} The cars leave full because of volume, not weight. Making room for two more
+riders per car is by far the largest single lever in the model, and it costs nothing but a message. The
+model also shows that it scales smoothly: partial compliance gives partial benefit.
+
+\paragraph{Walking is a supporting measure.} Floors 2 and 3 are only 17\% of the classrooms, and the
+atrium makes the climb to floor~2 feel like two flights. The gain comes mostly from the way down: walkers
+remove the empty stops on floors 3 and 2 that full cars make on their way to the lobby.
+
+\paragraph{The upper floors need structural help.} Floor~10 is the worst floor even after both measures,
+because all of its traffic goes through the two-car bank. Behavioral measures soften the problem; moving some of
+the load off the upper floors in the room assignment, or offsetting their clock, would act on the cause.
+The offset is a trade-off, not a free gain.
+
+\section{Limitations}
+
+\begin{itemize}
+\item \textbf{No measurements.} Every timing parameter (travel, door, boarding) and every behavioral
+share (leaving spread, arrival distribution, transfer share, compliance) is an assumption. The model
+produces \emph{relative} comparisons we believe are reasonable; absolute minutes and percentages should not be
+quoted as facts about Mundelein Center.
+\item \textbf{One passing period.} We simulate one changeover from an empty building. Backlog from the previous
+changeover would make the baseline worse.
+\item \textbf{Uniform schedule.} Without a room-by-block schedule we assume every room is in use with probability
+$p_{occ}$ in every block and cannot distinguish heavy blocks from light ones.
+\item \textbf{Simple dispatching.} The real controller is proprietary and may behave differently. We deliberately
+did not model a full-car bypass or down-peak mode, because these were out of scope.
+\item \textbf{Static students.} Students do not adapt by leaving earlier when they see a line, which would
+reduce lateness in practice.
+\end{itemize}
+
+\section{Conclusions and recommendations}
+
+\begin{enumerate}
+\item Ask students to hold backpacks in front. In the model this is the largest single improvement: about
+31\% less mean wait and half the late arrivals at full compliance.
+\item Ask students on floors 2 and 3 to walk, especially downward. It is a smaller gain, about 6\% of wait on its
+own, but it combines with the first measure, and the two together reduce mean wait by about 35\%.
+\item If the registrar will consider it, try a 5-minute offset for floors 10--14. It shortens the time to clear
+the queue noticeably, but it costs students who move between floor groups, so measure before extending it.
+\item Do not expect behavioral measures alone to fix floor~10. Its waiting time is structural.
+\item Before quoting any number, run a timing study. Time round trips from floor~9, count stops and riders, and
+measure the door time per stop.
+\end{enumerate}
+
+\section{Reproducibility}
+\label{sec:repro}
+
+The simulator (\texttt{model/elevator\_sim.py}), the experiment runner (\texttt{model/run\_experiments.py}),
+all result tables (\texttt{results/*.csv}), and these figures are in the project repository. Running
+\texttt{python run\_experiments.py} with 60 replicates regenerates every table and figure.
+
+
+
+\begin{thebibliography}{9}
+\bibitem{luc-grid} Loyola University Chicago, Office of the Registrar. \emph{University Scheduling Grid}.
+\url{https://www.luc.edu/regrec/facultystaff/scheduling/universityschedulinggrid/}. Accessed 29 October 2026.
+\bibitem{barney} G.~C. Barney and S.~M. dos Santos. \emph{Elevator Traffic Analysis, Design and Control}.
+Peter Peregrinus, 2nd edition, 1985.
+\bibitem{strakosch} G.~R. Strakosch. \emph{Vertical Transportation: Elevators and Escalators}. Wiley,
+2nd edition, 1998.
+\end{thebibliography}
+
+\end{document}
